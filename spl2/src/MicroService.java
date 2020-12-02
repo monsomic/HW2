@@ -19,6 +19,8 @@
 public abstract class MicroService implements Runnable {
 
     private String name;
+    private MessageBusImpl bus;
+    private Callback call;
 
     /**
      * @param name the micro-service name (used mainly for debugging purposes -
@@ -26,6 +28,7 @@ public abstract class MicroService implements Runnable {
      */
     public MicroService(String name) {
     	this.name = name;
+    	bus= MessageBusImpl.getInstance();
     }
 
     /**
@@ -50,7 +53,8 @@ public abstract class MicroService implements Runnable {
      *                 queue.
      */
     protected final <T, E extends Event<T>> void subscribeEvent(Class<E> type, Callback<E> callback) {
-    	
+    	call=callback;
+    	bus.subscribeEvent(type,this);
     }
 
     /**
@@ -90,8 +94,7 @@ public abstract class MicroService implements Runnable {
      * 	       			null in case no micro-service has subscribed to {@code e.getClass()}.
      */
     protected final <T> Future<T> sendEvent(Event<T> e) {
-    	
-        return null; 
+        return bus.sendEvent(e);
     }
 
     /**
@@ -115,20 +118,20 @@ public abstract class MicroService implements Runnable {
      *               {@code e}.
      */
     protected final <T> void complete(Event<T> e, T result) {
-    	
+        bus.complete(e,result);
     }
 
     /**
      * this method is called once when the event loop starts.
      */
-    protected abstract void initialize();
+    protected abstract void initialize(); //do subscribe
 
     /**
      * Signals the event loop that it must terminate after handling the current
      * message.
      */
     protected final void terminate() {
-    	
+    	bus.unregister(this);
     }
 
     /**
@@ -136,7 +139,7 @@ public abstract class MicroService implements Runnable {
      *         construction time and is used mainly for debugging purposes.
      */
     public final String getName() {
-        return null;
+        return name;
     }
 
     /**
@@ -145,7 +148,17 @@ public abstract class MicroService implements Runnable {
      */
     @Override
     public final void run() {
-    	
+        bus.register(this);
+    	initialize();
+    	Message mess=null;
+    	while(mess!= destoryplanetmessege){ // when the planet is destroyed, there will be event/brodcast that will terminate all!!!
+    	    try {
+    	        mess = bus.awaitMessage(this);
+    	        call.call(mess);
+            }
+    	    catch (InterruptedException){};
+        }
+    	terminate();
     }
 
 }

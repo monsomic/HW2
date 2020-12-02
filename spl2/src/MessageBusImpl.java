@@ -1,4 +1,3 @@
-import java.sql.Array;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Vector;
@@ -15,8 +14,10 @@ public class MessageBusImpl implements MessageBus {
 	private Vector[] eventTypeList; // for each type pf message a vector of names
 	private Vector<Vector> eventTypeMap;
 	private Vector<Object[]> qmap; //hashmap (MessageType,index in qlist)
+	private static MessageBusImpl instance =null;
 
-	public MessageBusImpl(){
+
+	private MessageBusImpl(){
 		eventTypeList = new Vector[3];
 		/*for(int i=0;i<3;i++){
 			eventTypeList[i]=new Vector<String>(0);
@@ -25,7 +26,12 @@ public class MessageBusImpl implements MessageBus {
 
 		qmap =new Vector(0);
 	}
-	
+
+	public static synchronized MessageBusImpl getInstance() { // not sure if needed synchronized
+		if (instance == null)
+			instance = new MessageBusImpl();
+		return instance;
+	}
 	
 	@Override
 	public <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) {    // add Q from "all"(qlist[0][i]) to the correct event type
@@ -37,7 +43,7 @@ public class MessageBusImpl implements MessageBus {
 		
     }
 	@Override @SuppressWarnings("unchecked")
-	public <T> void complete(Event<T> e, T result) {
+	public <T> void complete(Event<T> e, T result) { // how to connect between the event and it's future??
 
 	}
 
@@ -48,8 +54,8 @@ public class MessageBusImpl implements MessageBus {
 
 	
 	@Override
-	public <T> Future<T> sendEvent(Event<T> e) {
-		
+	public <T> Future<T> sendEvent(Event<T> e) { //enque to the right queue (round robin)
+
         return null;
 	}
 
