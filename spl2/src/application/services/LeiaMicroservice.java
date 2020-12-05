@@ -2,7 +2,10 @@ package application.services;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Future;
 
+import application.messages.AttackEvent;
+import application.messages.DeactivationEvent;
 import bgu.spl.mics.MicroService;
 
 /**
@@ -15,14 +18,35 @@ import bgu.spl.mics.MicroService;
  */
 public class LeiaMicroservice extends MicroService {
 	private Attack[] attacks;
+	private Future[] futures;
 	
     public LeiaMicroservice(Attack[] attacks) {
         super("Leia");
 		this.attacks = attacks;
+		futures = new Future[attacks.length];
     }
 
     @Override
     protected void initialize() {
-    	
+    	//countDownLaunch -- lea doesnt send attacks before all sevices subscribe to busssss
+        // subscribe event if needed
+        // send all attack events
+        // wait until all futures are resolved
+        // send deactivatoion event
+        for(int i=0;i<attacks.length;i++){
+            futures[i]=sendEvent(new AttackEvent(attacks[i]));
+        }
+        boolean stop=false;
+        while(!stop)
+            stop=finishAllAttacks();
+        sendEvent(new DeactivationEvent());
+    }
+
+    private boolean finishAllAttacks(){
+        for(int i=0;i<futures.length;i++){
+            if(!futures[i].isDone())
+                return false;
+        }
+        return true;
     }
 }

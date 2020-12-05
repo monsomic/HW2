@@ -34,15 +34,14 @@ public class HanSoloMicroservice extends MicroService {
                 if(Ewoks.recruit(serials)==true)
                     succeed=true;
                 else{
-                    try {
-                        this.wait();
-                    }
-                    catch (InterruptedException){};
+                    try { this.wait(); }
+                    catch (InterruptedException e){};
                 }
             }
             this.sleep(duration);
             Ewoks.discharge(serials);
             complete(a,true);
         });
+
     }
 }

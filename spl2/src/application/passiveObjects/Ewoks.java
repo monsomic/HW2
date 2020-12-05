@@ -57,6 +57,7 @@ public class Ewoks {
             instance.ewokList[curr].release();
             curr= it.next();
         }
+        notifyAll(); // why doesnt work?
     }
 
 

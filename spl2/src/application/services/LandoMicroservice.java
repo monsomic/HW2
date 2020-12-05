@@ -8,11 +8,18 @@ import bgu.spl.mics.MicroService;
  * You MAY change constructor signatures and even add new public constructors.
  */
 public class LandoMicroservice  extends MicroService {
+    private long duration;
 
-    public LandoMicroservice(long duration) { super("Lando"); }
+    public LandoMicroservice(long duration) {
+        super("Lando");
+        this.duration=duration;
+    }
 
     @Override
     protected void initialize() {
-       
+        subscribeEvent(BombDestroyerEvent.class,(BombDestroyerEvent b)->{
+            this.sleep(duration);
+            complete(b,true);
+        });
     }
 }

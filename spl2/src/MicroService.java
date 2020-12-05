@@ -152,13 +152,21 @@ public abstract class MicroService implements Runnable {
     	initialize();
     	Message mess=null;
     	while(mess!= destoryplanetmessege){ // when the planet is destroyed, there will be event/brodcast that will terminate all!!!
-    	    try {
-    	        mess = bus.awaitMessage(this);
+
+    	        while(mess==null) {
+    	            try { mess = bus.awaitMessage(this);}
+                    catch (InterruptedException e){System.out.println("queue is empty");};
+                    if (mess == null) {
+                        try { wait(); }
+                        catch (InterruptedException e) {}
+                    }
+                }
     	        call.call(mess);
-            }
-    	    catch (InterruptedException){};
+
+
         }
     	terminate();
+    	System.out.println("gracefully shutdown");
     }
 
 }
