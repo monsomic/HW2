@@ -1,3 +1,5 @@
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * The MicroService is an abstract class that any micro-service in the system
  * must extend. The abstract MicroService class is responsible to get and
@@ -20,8 +22,8 @@ public abstract class MicroService implements Runnable {
 
     private String name;
     private MessageBusImpl bus;
-    private Callback call;
-
+    private Callback call; // vector of callback
+    private ConcurrentHashMap<Message,Integer> callMap;
     /**
      * @param name the micro-service name (used mainly for debugging purposes -
      *             does not have to be unique)
@@ -104,7 +106,7 @@ public abstract class MicroService implements Runnable {
      * @param b The broadcast message to send
      */
     protected final void sendBroadcast(Broadcast b) {
-    	
+    	bus.sendBroadcast(b);
     }
 
     /**

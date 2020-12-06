@@ -11,11 +11,11 @@ public class MessageBusImpl implements MessageBus {
 
 	private Vector<Vector<Message>> qlist; // list of all queues
 	//private Vector<Object[]> qmap; //hashmap (microservice name (String),index in qlist (int))
-	private ConcurrentHashMap<Integer,String> qmap;
+	private ConcurrentHashMap<String,Integer> qmap;
 
-	private Vector<Vector<String>> eventTypeList; // for each type pf message a vector of names
+	private Vector<Vector<String>> messageTypeList; // for each type of message a vector of names
 	//private Vector<Object[]> eventTypeMap; // hashmap (event type (Event.class),index in eventTypeList (int)) .getClass??
-	private ConcurrentHashMap<Integer,Class<? extends Event>> eventTypeMap; //
+	private ConcurrentHashMap<Class<? extends Message>,Integer> messageTypeMap; //
 
 	//private Vector<Object[]> futureMap; // hashmap (some Event (event<T>),its future (future<T>)
 	private ConcurrentHashMap<Event,Future> futureMap;
@@ -25,9 +25,9 @@ public class MessageBusImpl implements MessageBus {
 
 	private MessageBusImpl(){
 		qlist = new Vector<Vector<Message>>();
-		qmap= new ConcurrentHashMap<Integer,String>();
-		eventTypeList = new Vector<Vector<String>>(); //Vector<String> will act as a queue for round robin implementation
-		eventTypeMap = new ConcurrentHashMap<Integer,Class<? extends Event>>();
+		qmap= new ConcurrentHashMap<String,Integer>();
+		messageTypeList = new Vector<Vector<String>>(); //Vector<String> will act as a queue for round robin implementation
+		messageTypeMap = new ConcurrentHashMap<Class<? extends Message>,Integer>();
 		futureMap = new ConcurrentHashMap<Event,Future>();
 	}
 
@@ -39,18 +39,18 @@ public class MessageBusImpl implements MessageBus {
 	
 	@Override
 	public <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) {    //check if the type exists
-		if(eventTypeMap.contains(type)){ // when subscribing send event.class
-			for(int i:eventTypeMap.keySet()){
-				if(eventTypeMap.get(i).equals(type))
-					eventTypeList.elementAt(i).add(m.getName());
-			}
+		// when subscribing send event.class
+		Integer currIndex= messageTypeMap.get(type);
+		if(currIndex==null){ // make new vector for this specific type and add the name of m to the vector
+			messageTypeList.add(new Vector<String>());
+			int lastIndex= messageTypeList.size()-1;
+			messageTypeList.elementAt(lastIndex).add(m.getName());
+			messageTypeMap.put(type,lastIndex);
 		}
-		else{ // make new vector for this specific type and add the name of m to the vector
-			eventTypeList.add(new Vector<String>());
-			int lastIndex= eventTypeList.size()-1;
-			eventTypeList.elementAt(lastIndex).add(m.getName());
-			eventTypeMap.put(lastIndex,type); // add to eventTypeMap
+		else{
+			messageTypeList.elementAt(currIndex).add(m.getName()); // put the name in the existing event slot
 		}
+
 	}
 
 	@Override
@@ -71,26 +71,18 @@ public class MessageBusImpl implements MessageBus {
 	
 	@Override
 	public synchronized  <T> Future<T>  sendEvent(Event<T> e) { //enque to the right queue (round robin) , create future object , put in futuremap
-		boolean found=false;
-		for(int i:eventTypeMap.keySet()) {
-			if (eventTypeMap.get(i).equals(e.getClass()) && !eventTypeList.elementAt(i).isEmpty()){
-				String name= eventTypeList.elementAt(i).elementAt(0);
-				for(int j:qmap.keySet()){ //search the index that suits for the name in qmap
-					if(qmap.get(j).equals(name)){
-						qlist.elementAt(j).add(e);
-						break;
-					}
-				}
-				String currentFirstName= eventTypeList.elementAt(i).firstElement(); // the first name is pushed to the end
-				eventTypeList.elementAt(i).remove(0);
-				eventTypeList.elementAt(i).add(currentFirstName);
-				found=true;
-				break; // we want stop the loop , check if works
-			}
-		}
-		if (!found)
-			return null;
 
+		Integer ind= messageTypeMap.get(e.getClass());
+		if(ind!=null && !messageTypeList.elementAt(ind).isEmpty()){ //this event class is in map & there are microsevises subscribed to it
+			String name= messageTypeList.elementAt(ind).elementAt(0);
+			int qindex= qmap.get(name);
+			qlist.elementAt(qindex).add(e); // push the event to the right queue
+			messageTypeList.elementAt(ind).remove(0); // the first name is pushed to the end (round robin)
+			messageTypeList.elementAt(ind).add(name);
+		}
+		else{
+			return null;
+		}
 		Future<T> f= new Future<>();
 		futureMap.put(e,f);
 		notifyAll();
@@ -100,7 +92,7 @@ public class MessageBusImpl implements MessageBus {
 	@Override
 	public void register(MicroService m) {    // add to qlist, add name to qmap
 		qlist.add(new Vector<Message>());
-		qmap.put(qlist.size()-1,m.getName());
+		qmap.put(m.getName(),qlist.size()-1);
 	}
 
 	@Override
@@ -108,18 +100,32 @@ public class MessageBusImpl implements MessageBus {
 		// find the index of the name in qmap, save and delete
 		// go to the index in qlist and delete the queue
 		// delete from eventTypeList (pass on all the vectors and find name.
+		// think if it changes the location of the queues in qlist??
+		Integer index= qmap.get(m.getName());
+		qmap.remove(m.getName());
+		qlist.removeElementAt(index);
+		for(String i:qmap.keySet()){ // if removeElement pushes all the bigger indexes one place left
+			Integer currentIndex=qmap.get(i);
+			if(currentIndex>index)
+				qmap.replace(i,currentIndex-1);
+		}
+		for(Vector<String> v:messageTypeList){
+			for(String s: v){
+				if(s.equals(m.getName()))
+					v.remove(s); // check if removes correctly
+			}
+		}
 	}
 
 	@Override
 	public Message awaitMessage(MicroService m) throws InterruptedException {
 
-			int index = qmap.get(m.getName()) // change the location of key/value if it to work
+			int index = qmap.get(m.getName());
 			if( qlist.elementAt(index).isEmpty())
 				return null;
 			Message toReturn = qlist.elementAt(index).firstElement();
 			qlist.elementAt(index).remove(0);
 			return toReturn;
-
 	}
 
 	private void restart(){ // to clear everything from messegebus
