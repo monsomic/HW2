@@ -42,7 +42,7 @@ class MessageBusImplTest {
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
-        MBI = new MessageBusImpl();
+        MBI.getInstance();
         b = new anaAref();
         a = new eloimsheishmor();
 

@@ -8,5 +8,18 @@ package application.passiveObjects;
  * Do not add to this class nothing but a single constructor, getters and setters.
  */
 public class Diary {
+    private static Diary instance = null;
+
+
+    private Diary() {
+
+    } צ
+
+    public synchronized static Diary  getInstance(){
+        if (instance == null)
+            instance = new Diary();
+        return instance;
+
+    }
 
 }
