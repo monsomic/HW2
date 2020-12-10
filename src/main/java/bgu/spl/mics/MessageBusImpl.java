@@ -71,7 +71,7 @@ public class MessageBusImpl implements MessageBus {
 
 		ConcurrentLinkedQueue<MicroService> Q = messageTypeMap.get(b.getClass());
 		if(Q!=null) {
-			synchronized (lockSubBroadcast){
+			synchronized (lockUnregisterSendBroadcast){
 			for(MicroService m :Q) {
 				qmap.get(m).add(b);
 				}

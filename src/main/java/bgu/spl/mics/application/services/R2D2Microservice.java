@@ -3,6 +3,7 @@ package main.java.bgu.spl.mics.application.services;
 import main.java.bgu.spl.mics.application.messages.AttackEvent;
 import main.java.bgu.spl.mics.application.messages.BombDestroyerEvent;
 import main.java.bgu.spl.mics.application.messages.DeactivationEvent;
+import main.java.bgu.spl.mics.application.messages.DestroyPlanetBroadcast;
 import main.java.bgu.spl.mics.application.passiveObjects.Ewoks;
 import main.java.bgu.spl.mics.MicroService;
 
@@ -35,10 +36,14 @@ public class R2D2Microservice extends MicroService {
                 e.printStackTrace();
             }
             complete(d,true);
+            diary.setR2D2Deactivate(System.currentTimeMillis());
+        });
+        subscribeBroadcast(DestroyPlanetBroadcast.class, (DestroyPlanetBroadcast d) -> {
+            terminate();
         });
     }
 
-    protected void writeDiary() {
+    protected void writeDiaryTerminate() {
         diary.setR2D2Terminate(System.currentTimeMillis());
     }
 }

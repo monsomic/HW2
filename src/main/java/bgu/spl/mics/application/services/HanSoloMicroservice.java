@@ -2,6 +2,7 @@ package main.java.bgu.spl.mics.application.services;
 import java.util.List;
 import main.java.bgu.spl.mics.application.messages.AttackEvent;
 import main.java.bgu.spl.mics.application.messages.DestroyPlanetBroadcast;
+import main.java.bgu.spl.mics.application.messages.NoMoreAttacksBroadcast;
 import main.java.bgu.spl.mics.application.passiveObjects.Ewoks;
 import main.java.bgu.spl.mics.MicroService;
 
@@ -50,16 +51,21 @@ public class HanSoloMicroservice extends MicroService {
             }
             crew.discharge(serials);
             complete(a, true);
+            diary.setTotalAttacks();
         });
 
         subscribeBroadcast(DestroyPlanetBroadcast.class, (DestroyPlanetBroadcast d) -> {
             terminate();
         });
 
+        subscribeBroadcast(NoMoreAttacksBroadcast.class, (NoMoreAttacksBroadcast n) -> {
+            diary.setHanSoloFinish(System.currentTimeMillis());
+        });
+
     }
 
 
-    protected void writeDiary() {
+    protected void writeDiaryTerminate() {
         diary.setHanSoloTerminate(System.currentTimeMillis());
     }
 }

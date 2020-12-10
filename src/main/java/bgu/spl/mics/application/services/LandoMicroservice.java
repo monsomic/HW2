@@ -28,7 +28,7 @@ public class LandoMicroservice  extends MicroService {
         });
     }
 
-    protected void writeDiary() {
+    protected void writeDiaryTerminate() {
         diary.setLandoTerminate(System.currentTimeMillis());
     }
 }

@@ -173,10 +173,10 @@ public abstract class MicroService implements Runnable {
                 }
 
     	bus.unregister(this);
-    	writeDiary(); // check if it is the right place for this function
+    	writeDiaryTerminate(); // check if it is the right place for this function
     	System.out.println("SuperGracefully shutdown");
     }
 
-    protected abstract void writeDiary();
+    protected abstract void writeDiaryTerminate();
 
 }

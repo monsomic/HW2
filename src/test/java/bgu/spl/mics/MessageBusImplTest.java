@@ -37,7 +37,7 @@ class stam extends MicroService {
     }
 
     @Override
-    protected void writeDiary() {
+    protected void writeDiaryTerminate() {
 
     }
 }

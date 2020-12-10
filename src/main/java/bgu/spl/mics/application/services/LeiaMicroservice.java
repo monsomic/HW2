@@ -5,6 +5,7 @@ import main.java.bgu.spl.mics.MicroService;
 import main.java.bgu.spl.mics.application.messages.AttackEvent;
 import main.java.bgu.spl.mics.application.messages.BombDestroyerEvent;
 import main.java.bgu.spl.mics.application.messages.DeactivationEvent;
+import main.java.bgu.spl.mics.application.messages.NoMoreAttacksBroadcast;
 import main.java.bgu.spl.mics.application.passiveObjects.Attack;
 
 /**
@@ -36,9 +37,12 @@ public class LeiaMicroservice extends MicroService {
         for(int i=0;i<attacks.length;i++){
             futures[i]=sendEvent(new AttackEvent(attacks[i]));
         }
+        sendBroadcast(new NoMoreAttacksBroadcast());
+
         for(int i=0;i<futures.length;i++){
             futures[i].get();
         }
+
 
         deactivationFuture= sendEvent(new DeactivationEvent());
 
@@ -46,7 +50,7 @@ public class LeiaMicroservice extends MicroService {
             sendEvent(new BombDestroyerEvent());
     }
 
-    protected void writeDiary() {
+    protected void writeDiaryTerminate() {
         diary.setLeiaTerminate(System.currentTimeMillis());
     }
 }
