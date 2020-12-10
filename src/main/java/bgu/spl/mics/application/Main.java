@@ -28,7 +28,8 @@ public class Main {
 		//read input
 			Gson gson = new Gson();
 			try {
-				Reader reader = new FileReader(args[0]);
+				Reader reader = new FileReader("input.json");
+				System.out.println("habaita");
 				Input json = gson.fromJson(reader, Input.class);
 				Diary diary = Diary.getInstance();
 				battle(json);
@@ -60,7 +61,7 @@ public class Main {
 				try {
 					countDownLatch.await();
 					t4.start();
-				} catch (InterruptedException e) {
+				} catch (InterruptedException e) {System.out.println("lia is dead");
 				}
 
 				try{
