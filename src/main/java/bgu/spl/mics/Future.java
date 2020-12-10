@@ -65,7 +65,7 @@ public class Future<T> {
      * 	       wait for {@code timeout} TimeUnits {@code unit}. If time has
      *         elapsed, return null.
      */
-	public T get(long timeout, TimeUnit unit) {
+	public synchronized T get(long timeout, TimeUnit unit) {
 		while (!isDone){
 			try{ wait(unit.toMillis(timeout));}
 			catch(InterruptedException e){e.getStackTrace();}
